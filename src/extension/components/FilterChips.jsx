@@ -1,4 +1,4 @@
-export function FilterChips({ filters, onChange, productOptions }) {
+export function FilterChips({ filters, onChange, onClearAll, productOptions }) {
   const product = productOptions.find((item) => item.id === filters.product);
   const chips = [];
 
@@ -35,6 +35,9 @@ export function FilterChips({ filters, onChange, productOptions }) {
           {label} <span>×</span>
         </button>
       ))}
+      <button className="mre-clear-chip" onClick={onClearAll}>
+        Clear all
+      </button>
     </div>
   );
 }

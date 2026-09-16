@@ -11,8 +11,8 @@ export function TopProducts({ onSelectProduct, products, reviewCount }) {
       </div>
       <div className="mre-top-list">
         {products.map((product, index) => (
-          <details className="mre-product-detail" key={product.id} open={index === 0}>
-            <summary>
+          <article className="mre-product-detail" key={product.id}>
+            <div className="mre-product-summary">
               <span className="mre-rank">{index + 1}</span>
               <img alt="" loading="lazy" src={product.image} />
               <button className="mre-product-title" onClick={() => onSelectProduct(product.id)}>
@@ -23,7 +23,7 @@ export function TopProducts({ onSelectProduct, products, reviewCount }) {
                 <em>{product.total} reviews</em>
                 <em className={product.riskScore > 45 ? "is-risky" : ""}>{product.riskScore}% risk</em>
               </span>
-            </summary>
+            </div>
             <div className="mre-rating-breakdown">
               {[5, 4, 3, 2, 1].map((rating) => {
                 const maxRatingCount = Math.max(...Object.values(product.ratings), 1);
@@ -40,7 +40,7 @@ export function TopProducts({ onSelectProduct, products, reviewCount }) {
                 );
               })}
             </div>
-          </details>
+          </article>
         ))}
       </div>
     </section>

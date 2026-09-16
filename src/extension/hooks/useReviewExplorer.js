@@ -15,7 +15,6 @@ import {
   getDatePresetRange,
   getReviewDateRange,
   groupReviewsByDate,
-  toCsv,
 } from "../utils/reviews.js";
 import { getShopHandleFromUrl } from "../utils/shop.js";
 import { clearLegacyStorage, getStoredShopData, saveStoredShopData } from "../utils/storage.js";
@@ -28,7 +27,6 @@ const DEFAULT_FILTERS = {
   to: "",
   sort: "newest",
   mediaOnly: false,
-  problemOnly: false,
 };
 
 const REVIEW_PAGE_SIZE = 60;
@@ -51,13 +49,21 @@ export function useReviewExplorer() {
   const requestIdRef = useRef(0);
 
   const filteredReviews = useMemo(() => filterReviews(reviews, filters), [filters, reviews]);
+  const visibleReviews = useMemo(() => {
+    if (activeTab !== "problems") return filteredReviews;
+    return filterReviews(filteredReviews, {
+      ...DEFAULT_FILTERS,
+      rating: "all",
+      sort: "rating-low",
+    }).filter((review) => Number(review.rating || 0) <= 2);
+  }, [activeTab, filteredReviews]);
   const productOptions = useMemo(() => buildProductOptions(reviews), [reviews]);
   const stats = useMemo(() => buildStats(reviews, filteredReviews), [filteredReviews, reviews]);
-  const groupedReviews = useMemo(() => groupReviewsByDate(filteredReviews), [filteredReviews]);
+  const groupedReviews = useMemo(() => groupReviewsByDate(visibleReviews), [visibleReviews]);
   const pagedReviews = useMemo(() => {
     const start = (reviewPage - 1) * REVIEW_PAGE_SIZE;
-    return filteredReviews.slice(start, start + REVIEW_PAGE_SIZE);
-  }, [filteredReviews, reviewPage]);
+    return visibleReviews.slice(start, start + REVIEW_PAGE_SIZE);
+  }, [reviewPage, visibleReviews]);
   const groupedPagedReviews = useMemo(() => groupReviewsByDate(pagedReviews), [pagedReviews]);
   const topProducts = useMemo(() => buildTopProducts(filteredReviews), [filteredReviews]);
   const allProducts = useMemo(() => buildProducts(filteredReviews), [filteredReviews]);
@@ -94,13 +100,12 @@ export function useReviewExplorer() {
   }, []);
 
   const showProblems = useCallback(() => {
-    setFilters((current) => ({
-      ...current,
-      problemOnly: true,
-      rating: "all",
-      sort: "rating-low",
-    }));
     setActiveTab("problems");
+    setReviewPage(1);
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setFilters(DEFAULT_FILTERS);
     setReviewPage(1);
   }, []);
 
@@ -233,39 +238,6 @@ export function useReviewExplorer() {
     supplierId,
   ]);
 
-  const copyFilteredReviews = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(filteredReviews, null, 2));
-      setStatus(`Copied ${filteredReviews.length} filtered reviews.`);
-    } catch {
-      setStatus("Clipboard blocked. Use Download instead.");
-    }
-  }, [filteredReviews]);
-
-  const downloadFilteredReviews = useCallback(() => {
-    const blob = new Blob([JSON.stringify(filteredReviews, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "meesho-filtered-reviews.json";
-    link.click();
-    URL.revokeObjectURL(url);
-  }, [filteredReviews]);
-
-  const downloadFilteredCsv = useCallback(() => {
-    const blob = new Blob([toCsv(filteredReviews)], {
-      type: "text/csv;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "meesho-filtered-reviews.csv";
-    link.click();
-    URL.revokeObjectURL(url);
-  }, [filteredReviews]);
-
   useEffect(() => {
     const handle = getShopHandleFromUrl();
     setShopHandle(handle);
@@ -305,16 +277,16 @@ export function useReviewExplorer() {
   }, [filters.product, productOptions]);
 
   const reviewPagination = useMemo(() => {
-    const totalPages = Math.max(1, Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(visibleReviews.length / REVIEW_PAGE_SIZE));
     return {
       page: Math.min(reviewPage, totalPages),
       pageSize: REVIEW_PAGE_SIZE,
-      total: filteredReviews.length,
+      total: visibleReviews.length,
       totalPages,
-      from: filteredReviews.length ? (Math.min(reviewPage, totalPages) - 1) * REVIEW_PAGE_SIZE + 1 : 0,
-      to: Math.min(Math.min(reviewPage, totalPages) * REVIEW_PAGE_SIZE, filteredReviews.length),
+      from: visibleReviews.length ? (Math.min(reviewPage, totalPages) - 1) * REVIEW_PAGE_SIZE + 1 : 0,
+      to: Math.min(Math.min(reviewPage, totalPages) * REVIEW_PAGE_SIZE, visibleReviews.length),
     };
-  }, [filteredReviews.length, reviewPage]);
+  }, [reviewPage, visibleReviews.length]);
 
   useEffect(() => {
     if (reviewPage > reviewPagination.totalPages) {
@@ -325,11 +297,9 @@ export function useReviewExplorer() {
   return {
     actions: {
       close: () => setIsOpen(false),
-      copyFilteredReviews,
+      clearAllFilters,
       detectProfile,
       applyDatePreset,
-      downloadFilteredReviews,
-      downloadFilteredCsv,
       loadReviews,
       open: () => {
         setIsOpen(true);

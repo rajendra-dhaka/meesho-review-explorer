@@ -1,8 +1,8 @@
 {
   "name": "meesho-review-explorer",
-  "version": "1.3.0",
+  "version": "1.3.2",
   "private": true,
-  "description": "A React Chrome extension for exploring Meesho shop reviews with filters, rating insights, and exports.",
+  "description": "A React Chrome extension for exploring Meesho shop reviews with filters and rating insights.",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",

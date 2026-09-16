@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Meesho Review Explorer",
-  "version": "1.3.0",
+  "version": "1.3.2",
   "description": "Load Meesho seller reviews into a searchable, filterable modal.",
   "permissions": ["storage", "clipboardWrite"],
   "host_permissions": ["https://www.meesho.com/*"],

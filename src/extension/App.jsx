@@ -16,11 +16,8 @@ import { useReviewExplorer } from "./hooks/useReviewExplorer.js";
 export default function App() {
   const { actions, data, filters, status, ui } = useReviewExplorer();
   const changeTab = (tab) => {
-    if (tab === "problems") {
-      actions.showProblems();
-      return;
-    }
-    actions.setActiveTab(tab);
+    if (tab === "problems") actions.showProblems();
+    else actions.setActiveTab(tab);
   };
 
   return (
@@ -46,10 +43,7 @@ export default function App() {
           defaultMaxReviews={DEFAULT_MAX_REVIEWS}
           disabled={ui.isProfileLoading && !ui.isProfileReady}
           isReviewLoading={ui.isReviewLoading}
-          onCopy={actions.copyFilteredReviews}
-          onCsv={actions.downloadFilteredCsv}
           onDetect={actions.detectProfile}
-          onDownload={actions.downloadFilteredReviews}
           onLoad={actions.loadReviews}
           onProblems={actions.showProblems}
           onSupplierChange={actions.setSupplierId}
@@ -67,6 +61,24 @@ export default function App() {
         <StatsGrid stats={data.stats} />
 
         <Tabs activeTab={data.activeTab} onChange={changeTab} />
+
+        {data.reviews.length > 0 && !(ui.isProfileLoading && !ui.isProfileReady) && (
+          <>
+            <Filters
+              filters={filters}
+              onChange={actions.updateFilter}
+              onClearAll={actions.clearAllFilters}
+              onDatePreset={actions.applyDatePreset}
+              productOptions={data.productOptions}
+            />
+            <FilterChips
+              filters={filters}
+              onChange={actions.updateFilter}
+              onClearAll={actions.clearAllFilters}
+              productOptions={data.productOptions}
+            />
+          </>
+        )}
 
         {(data.activeTab === "overview" || data.activeTab === "products") && (
           <TopProducts
@@ -90,18 +102,6 @@ export default function App() {
 
         {(data.activeTab === "reviews" || data.activeTab === "problems") && (
           <>
-            <Filters
-              filters={filters}
-              onChange={actions.updateFilter}
-              onDatePreset={actions.applyDatePreset}
-              productOptions={data.productOptions}
-            />
-            <FilterChips
-              filters={filters}
-              onChange={actions.updateFilter}
-              productOptions={data.productOptions}
-            />
-
             <ReviewList
               groups={data.groupedPagedReviews}
               hasReviews={data.reviews.length > 0}

@@ -3,9 +3,10 @@ export function Insights({ comparison, problemInsights, onShowProblems }) {
     <section className="mre-insights">
       <div className="mre-insight-card">
         <div className="mre-section-heading">
-          <strong>Problem keywords</strong>
+          <strong>Repeated complaint words</strong>
           <button onClick={onShowProblems}>Show problems</button>
         </div>
+        <p className="mre-help-text">Words repeatedly found in 1-2 star reviews.</p>
         <div className="mre-chip-list">
           {problemInsights.keywords.length ? (
             problemInsights.keywords.map((item) => (
@@ -21,8 +22,9 @@ export function Insights({ comparison, problemInsights, onShowProblems }) {
 
       <div className="mre-insight-card">
         <div className="mre-section-heading">
-          <strong>Sentiment buckets</strong>
+          <strong>Complaint types</strong>
         </div>
+        <p className="mre-help-text">Automatic grouping of low-rated reviews by likely issue.</p>
         <div className="mre-chip-list">
           {problemInsights.categories.length ? (
             problemInsights.categories.map((item) => (
