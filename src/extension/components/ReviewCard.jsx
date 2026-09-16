@@ -1,6 +1,6 @@
 import { formatReviewDate, getImages, shorten } from "../utils/reviews.js";
 
-export function ReviewCard({ review }) {
+export function ReviewCard({ onImageClick, review }) {
   const rating = Math.max(1, Math.min(5, Math.round(Number(review.rating || 1))));
   const images = getImages(review);
 
@@ -29,9 +29,14 @@ export function ReviewCard({ review }) {
       {images.length > 0 && (
         <div className="mre-images">
           {images.slice(0, 5).map((image) => (
-            <a href={image.url} key={image.id || image.url} rel="noreferrer" target="_blank">
+            <button
+              className="mre-image-button"
+              key={image.id || image.url}
+              onClick={() => onImageClick(image.url)}
+              type="button"
+            >
               <img alt="" loading="lazy" src={image.url} />
-            </a>
+            </button>
           ))}
         </div>
       )}

@@ -131,6 +131,7 @@ export function filterReviews(reviews, filters) {
     if (filters.product !== "all" && String(review.product_id || "unknown") !== filters.product) return false;
     if (filters.rating !== "all" && Number(review.rating) !== Number(filters.rating)) return false;
     if (filters.mediaOnly && !getImages(review).length) return false;
+    if (filters.problemOnly && Number(review.rating || 0) > 2) return false;
     if (from && date && date < from) return false;
     if (to && date && date > to) return false;
     return true;
@@ -172,7 +173,7 @@ export function buildProductOptions(reviews) {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function buildTopProducts(reviews) {
+export function buildProducts(reviews) {
   const productMap = new Map();
 
   for (const review of reviews) {
@@ -184,6 +185,7 @@ export function buildTopProducts(reviews) {
         image: review.product_image_thumb_url || review.product_image_large_url || "",
         total: 0,
         ratingSum: 0,
+        lowRated: 0,
         ratings: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
       });
     }
@@ -192,6 +194,7 @@ export function buildTopProducts(reviews) {
     const rating = Math.max(1, Math.min(5, Math.round(Number(review.rating || 0)) || 1));
     product.total += 1;
     product.ratingSum += Number(review.rating || 0);
+    if (rating <= 2) product.lowRated += 1;
     product.ratings[rating] += 1;
   }
 
@@ -199,9 +202,183 @@ export function buildTopProducts(reviews) {
     .map((product) => ({
       ...product,
       averageRating: product.total ? product.ratingSum / product.total : 0,
+      negativePercent: product.total ? Math.round((product.lowRated / product.total) * 100) : 0,
+      riskScore: product.total
+        ? Math.min(100, Math.round((product.lowRated / product.total) * 70 + (5 - product.ratingSum / product.total) * 8))
+        : 0,
     }))
-    .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
-    .slice(0, 5);
+    .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+}
+
+export function buildTopProducts(reviews) {
+  return buildProducts(reviews).slice(0, 5);
+}
+
+const PROBLEM_KEYWORDS = [
+  "broken",
+  "damage",
+  "damaged",
+  "slow",
+  "not working",
+  "poor",
+  "bad",
+  "quality",
+  "return",
+  "refund",
+  "missing",
+  "wrong",
+  "defective",
+  "charge",
+  "charging",
+  "leak",
+  "scratch",
+  "fake",
+  "small",
+  "large",
+  "delivery",
+  "late",
+];
+
+export function classifyReview(review) {
+  const rating = Number(review.rating || 0);
+  const text = String(review.comments || "").toLowerCase();
+
+  if (rating >= 4) return "Positive";
+  if (/deliver|late|courier/.test(text)) return "Delivery issue";
+  if (/broken|damage|defective|scratch|leak/.test(text)) return "Damaged/Broken";
+  if (/quality|poor|bad|fake/.test(text)) return "Quality issue";
+  if (/size|small|large|fit/.test(text)) return "Size/Fit issue";
+  if (/not working|charge|charging|slow/.test(text)) return "Not working";
+  if (rating <= 2) return "Problem";
+  return "Neutral";
+}
+
+export function buildProblemInsights(reviews) {
+  const lowRated = reviews.filter((review) => Number(review.rating || 0) <= 2);
+  const phraseCounts = new Map();
+  const categoryCounts = new Map();
+
+  for (const review of lowRated) {
+    const text = String(review.comments || "").toLowerCase();
+    const category = classifyReview(review);
+    categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1);
+
+    for (const keyword of PROBLEM_KEYWORDS) {
+      if (text.includes(keyword)) {
+        phraseCounts.set(keyword, (phraseCounts.get(keyword) || 0) + 1);
+      }
+    }
+  }
+
+  return {
+    lowRated,
+    keywords: [...phraseCounts.entries()]
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12),
+    categories: [...categoryCounts.entries()]
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count),
+  };
+}
+
+export function buildDateComparison(reviews) {
+  const dated = reviews
+    .map((review) => ({ review, time: getReviewDate(review)?.getTime() }))
+    .filter((item) => Number.isFinite(item.time))
+    .sort((a, b) => b.time - a.time);
+
+  if (!dated.length) return null;
+
+  const latest = new Date(dated[0].time);
+  const currentStart = new Date(latest);
+  currentStart.setDate(currentStart.getDate() - 6);
+  currentStart.setHours(0, 0, 0, 0);
+
+  const previousStart = new Date(currentStart);
+  previousStart.setDate(previousStart.getDate() - 7);
+  const previousEnd = new Date(currentStart);
+  previousEnd.setMilliseconds(-1);
+
+  const current = dated.filter((item) => item.time >= currentStart.getTime()).map((item) => item.review);
+  const previous = dated
+    .filter((item) => item.time >= previousStart.getTime() && item.time <= previousEnd.getTime())
+    .map((item) => item.review);
+
+  const summarize = (items) => {
+    const count = items.length;
+    const avg = count ? items.reduce((sum, review) => sum + Number(review.rating || 0), 0) / count : 0;
+    const bad = items.filter((review) => Number(review.rating || 0) <= 2).length;
+    return { count, avg, bad };
+  };
+
+  const currentSummary = summarize(current);
+  const previousSummary = summarize(previous);
+
+  return {
+    current: currentSummary,
+    previous: previousSummary,
+    deltas: {
+      count: currentSummary.count - previousSummary.count,
+      avg: currentSummary.avg - previousSummary.avg,
+      bad: currentSummary.bad - previousSummary.bad,
+    },
+  };
+}
+
+export function getDatePresetRange(preset) {
+  const now = new Date();
+  const end = new Date(now);
+  const start = new Date(now);
+
+  if (preset === "today") {
+    // keep today
+  } else if (preset === "7d") {
+    start.setDate(start.getDate() - 6);
+  } else if (preset === "30d") {
+    start.setDate(start.getDate() - 29);
+  } else if (preset === "month") {
+    start.setDate(1);
+  } else {
+    return { from: "", to: "" };
+  }
+
+  const toInput = (date) => {
+    const copy = new Date(date);
+    copy.setMinutes(copy.getMinutes() - copy.getTimezoneOffset());
+    return copy.toISOString().slice(0, 10);
+  };
+
+  return { from: toInput(start), to: toInput(end) };
+}
+
+export function toCsv(reviews) {
+  const headers = [
+    "date",
+    "rating",
+    "product_id",
+    "product_name",
+    "reviewer",
+    "comment",
+    "image_count",
+    "helpful_count",
+    "sentiment",
+  ];
+
+  const escape = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+  const rows = reviews.map((review) => [
+    formatReviewDate(review),
+    review.rating,
+    review.product_id,
+    review.product_name,
+    review.reviewer_name || review.author?.name || "Meesho User",
+    review.comments || "",
+    getImages(review).length,
+    review.helpful_count || 0,
+    classifyReview(review),
+  ]);
+
+  return [headers, ...rows].map((row) => row.map(escape).join(",")).join("\n");
 }
 
 export function buildStats(reviews, filteredReviews) {

@@ -1,6 +1,6 @@
 import { ReviewCard } from "./ReviewCard.jsx";
 
-export function ReviewList({ groups, hasReviews, isDetecting }) {
+export function ReviewList({ groups, hasReviews, isDetecting, onImageClick }) {
   if (isDetecting) {
     return <div className="mre-empty">Detecting this shop&apos;s supplier id from profile API...</div>;
   }
@@ -19,7 +19,11 @@ export function ReviewList({ groups, hasReviews, isDetecting }) {
           </div>
           <div className="mre-cards">
             {reviews.map((review, index) => (
-              <ReviewCard key={review.review_id || `${review.product_id}-${index}`} review={review} />
+              <ReviewCard
+                key={review.review_id || `${review.product_id}-${index}`}
+                onImageClick={onImageClick}
+                review={review}
+              />
             ))}
           </div>
         </section>

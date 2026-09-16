@@ -2,13 +2,26 @@ import { APP_VERSION, DEFAULT_MAX_REVIEWS } from "./constants.js";
 import { Controls } from "./components/Controls.jsx";
 import { DateSummary } from "./components/DateSummary.jsx";
 import { Filters } from "./components/Filters.jsx";
+import { FilterChips } from "./components/FilterChips.jsx";
+import { Insights } from "./components/Insights.jsx";
+import { Lightbox } from "./components/Lightbox.jsx";
+import { Pagination } from "./components/Pagination.jsx";
+import { ProductExplorer } from "./components/ProductExplorer.jsx";
 import { ReviewList } from "./components/ReviewList.jsx";
 import { StatsGrid } from "./components/StatsGrid.jsx";
+import { Tabs } from "./components/Tabs.jsx";
 import { TopProducts } from "./components/TopProducts.jsx";
 import { useReviewExplorer } from "./hooks/useReviewExplorer.js";
 
 export default function App() {
   const { actions, data, filters, status, ui } = useReviewExplorer();
+  const changeTab = (tab) => {
+    if (tab === "problems") {
+      actions.showProblems();
+      return;
+    }
+    actions.setActiveTab(tab);
+  };
 
   return (
     <>
@@ -34,9 +47,11 @@ export default function App() {
           disabled={ui.isProfileLoading && !ui.isProfileReady}
           isReviewLoading={ui.isReviewLoading}
           onCopy={actions.copyFilteredReviews}
+          onCsv={actions.downloadFilteredCsv}
           onDetect={actions.detectProfile}
           onDownload={actions.downloadFilteredReviews}
           onLoad={actions.loadReviews}
+          onProblems={actions.showProblems}
           onSupplierChange={actions.setSupplierId}
           supplierId={data.supplierId}
         />
@@ -51,19 +66,54 @@ export default function App() {
 
         <StatsGrid stats={data.stats} />
 
-        <TopProducts products={data.topProducts} reviewCount={data.filteredReviews.length} />
+        <Tabs activeTab={data.activeTab} onChange={changeTab} />
 
-        <Filters
-          filters={filters}
-          onChange={actions.updateFilter}
-          productOptions={data.productOptions}
-        />
+        {(data.activeTab === "overview" || data.activeTab === "products") && (
+          <TopProducts
+            onSelectProduct={actions.selectProduct}
+            products={data.topProducts}
+            reviewCount={data.filteredReviews.length}
+          />
+        )}
 
-        <ReviewList
-          groups={data.groupedReviews}
-          hasReviews={data.reviews.length > 0}
-          isDetecting={ui.isProfileLoading && !ui.isProfileReady}
-        />
+        {data.activeTab === "products" && (
+          <ProductExplorer onSelectProduct={actions.selectProduct} products={data.allProducts} />
+        )}
+
+        {data.activeTab === "overview" && (
+          <Insights
+            comparison={data.dateComparison}
+            onShowProblems={actions.showProblems}
+            problemInsights={data.problemInsights}
+          />
+        )}
+
+        {(data.activeTab === "reviews" || data.activeTab === "problems") && (
+          <>
+            <Filters
+              filters={filters}
+              onChange={actions.updateFilter}
+              onDatePreset={actions.applyDatePreset}
+              productOptions={data.productOptions}
+            />
+            <FilterChips
+              filters={filters}
+              onChange={actions.updateFilter}
+              productOptions={data.productOptions}
+            />
+
+            <ReviewList
+              groups={data.groupedPagedReviews}
+              hasReviews={data.reviews.length > 0}
+              isDetecting={ui.isProfileLoading && !ui.isProfileReady}
+              onImageClick={actions.setLightboxImage}
+            />
+
+            <Pagination onPageChange={actions.setReviewPage} pagination={data.reviewPagination} />
+          </>
+        )}
+
+        <Lightbox imageUrl={data.lightboxImage} onClose={() => actions.setLightboxImage("")} />
       </section>
     </>
   );

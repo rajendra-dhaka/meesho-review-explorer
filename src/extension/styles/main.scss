@@ -106,7 +106,7 @@ $surface: #f8f8fc;
 }
 
 .mre-controls {
-  grid-template-columns: minmax(150px, 1fr) 110px repeat(4, auto);
+  grid-template-columns: minmax(150px, 1fr) 110px repeat(6, auto);
 
   label {
     display: grid;
@@ -122,7 +122,7 @@ $surface: #f8f8fc;
 }
 
 .mre-filters {
-  grid-template-columns: minmax(220px, 1.4fr) minmax(210px, 1fr) 110px 140px 140px 130px auto;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(210px, 1fr) 110px 140px 140px 130px auto auto;
 }
 
 .mre-controls input,
@@ -164,6 +164,37 @@ $surface: #f8f8fc;
   border: 1px solid #dddce9;
   background: $panel;
   color: #2c2c38;
+}
+
+.mre-danger-soft {
+  border-color: #edb5b5;
+  color: #b72b2b;
+}
+
+.mre-tabs {
+  display: flex;
+  gap: 8px;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 6px;
+  background: $panel;
+
+  button {
+    flex: 1;
+    min-height: 36px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #5d5b70;
+    font: inherit;
+    font-weight: 900;
+    cursor: pointer;
+
+    &.is-active {
+      background: $pink;
+      color: #fff;
+    }
+  }
 }
 
 .mre-status {
@@ -324,11 +355,20 @@ $surface: #f8f8fc;
 }
 
 .mre-product-title {
+  border: 0;
+  padding: 0;
+  background: transparent;
   min-width: 0;
   color: #292935;
+  cursor: pointer;
   font-size: 12px;
   font-weight: 900;
   line-height: 1.25;
+  text-align: left;
+
+  &:hover {
+    color: $pink;
+  }
 }
 
 .mre-product-score {
@@ -349,6 +389,160 @@ $surface: #f8f8fc;
     font-style: normal;
     font-weight: 900;
     white-space: nowrap;
+
+    &.is-risky {
+      color: #ca3030;
+    }
+  }
+}
+
+.mre-filter-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  gap: 8px;
+  border-radius: 8px;
+  background: rgba(248, 248, 252, 0.94);
+  backdrop-filter: blur(8px);
+}
+
+.mre-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  button {
+    min-height: 30px;
+    border: 1px solid #dddce9;
+    border-radius: 8px;
+    padding: 0 10px;
+    background: $panel;
+    color: #4f4d61;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+}
+
+.mre-insights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mre-insight-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 120px;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 12px;
+  background: $panel;
+
+  em {
+    color: #767489;
+    font-style: normal;
+    font-weight: 800;
+  }
+}
+
+.mre-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  strong {
+    font-size: 15px;
+  }
+
+  button {
+    min-height: 30px;
+    border: 1px solid #edb5b5;
+    border-radius: 8px;
+    background: #fff7f7;
+    color: #b72b2b;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+}
+
+.mre-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  span {
+    border-radius: 999px;
+    padding: 6px 9px;
+    background: #f3f2f8;
+    color: #4f4d61;
+    font-size: 12px;
+    font-weight: 850;
+  }
+}
+
+.mre-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  button {
+    min-height: 30px;
+    border: 1px solid #d7a0cf;
+    border-radius: 999px;
+    padding: 0 10px;
+    background: #fff6fd;
+    color: #5d2b57;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  span {
+    margin-left: 4px;
+    color: #9f2089;
+  }
+}
+
+.mre-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+
+  div {
+    border-radius: 8px;
+    padding: 9px;
+    background: #fbfbfe;
+  }
+
+  span,
+  em {
+    display: block;
+    color: #767489;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 900;
+  }
+
+  strong {
+    display: block;
+    margin: 4px 0;
+    font-size: 20px;
+  }
+
+  .is-good {
+    color: #087d55;
+  }
+
+  .is-bad {
+    color: #ca3030;
   }
 }
 
@@ -357,6 +551,75 @@ $surface: #f8f8fc;
   gap: 6px;
   border-top: 1px solid #ecebf3;
   padding: 8px;
+}
+
+.mre-product-explorer {
+  display: grid;
+  gap: 10px;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 10px;
+  background: $panel;
+}
+
+.mre-product-table {
+  display: grid;
+  gap: 6px;
+}
+
+.mre-product-row {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 80px 80px 80px 80px;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  border: 1px solid #e7e6f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fbfbfe;
+  color: #302f3d;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  text-align: left;
+
+  &:not(.is-head) {
+    cursor: pointer;
+
+    &:hover {
+      border-color: #d7a0cf;
+      background: #fff6fd;
+    }
+  }
+
+  &.is-head {
+    min-height: 34px;
+    background: #f3f2f8;
+    color: #686779;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+
+  .is-risky {
+    color: #ca3030;
+  }
+}
+
+.mre-product-name {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+
+  img {
+    width: 40px;
+    aspect-ratio: 1;
+    border: 1px solid #e2e1ec;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #f0eff6;
+  }
 }
 
 .mre-rating-row {
@@ -574,6 +837,14 @@ $surface: #f8f8fc;
   }
 }
 
+.mre-image-button {
+  display: block;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
 .mre-foot {
   display: flex;
   justify-content: space-between;
@@ -593,6 +864,76 @@ $surface: #f8f8fc;
   font-weight: 800;
 }
 
+.mre-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 10px;
+  background: $panel;
+  color: #5d5b70;
+  font-size: 13px;
+  font-weight: 900;
+
+  div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  button {
+    min-height: 32px;
+    border: 1px solid #dddce9;
+    border-radius: 8px;
+    padding: 0 10px;
+    background: #fff;
+    color: #2c2c38;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+}
+
+.mre-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+  padding: 36px;
+  background: rgba(20, 20, 30, 0.72);
+
+  button {
+    position: fixed;
+    top: 22px;
+    right: 22px;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 8px;
+    background: #fff;
+    color: #20202a;
+    font-size: 28px;
+    cursor: pointer;
+  }
+
+  img {
+    max-width: min(980px, 92vw);
+    max-height: 86vh;
+    border-radius: 8px;
+    object-fit: contain;
+    background: #fff;
+  }
+}
+
 @media (max-width: 1120px) {
   .mre-modal {
     inset: 12px;
@@ -603,9 +944,14 @@ $surface: #f8f8fc;
   .mre-filters,
   .mre-stats,
   .mre-date-summary,
+  .mre-insights,
   .mre-top-list,
   .mre-cards {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .mre-product-row {
+    grid-template-columns: minmax(220px, 1fr) repeat(4, 70px);
   }
 }
 
@@ -619,8 +965,24 @@ $surface: #f8f8fc;
   .mre-filters,
   .mre-stats,
   .mre-date-summary,
+  .mre-insights,
   .mre-top-list,
   .mre-cards {
     grid-template-columns: 1fr;
+  }
+
+  .mre-product-row {
+    grid-template-columns: 1fr 64px;
+
+    span:nth-child(3),
+    span:nth-child(4),
+    span:nth-child(5) {
+      display: none;
+    }
+  }
+
+  .mre-pagination {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

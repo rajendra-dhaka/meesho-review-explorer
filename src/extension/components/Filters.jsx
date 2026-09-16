@@ -1,6 +1,14 @@
-export function Filters({ filters, onChange, productOptions }) {
+export function Filters({ filters, onChange, onDatePreset, productOptions }) {
   return (
-    <div className="mre-filters">
+    <div className="mre-filter-wrap">
+      <div className="mre-presets">
+        <button onClick={() => onDatePreset("today")}>Today</button>
+        <button onClick={() => onDatePreset("7d")}>Last 7 days</button>
+        <button onClick={() => onDatePreset("30d")}>Last 30 days</button>
+        <button onClick={() => onDatePreset("month")}>This month</button>
+        <button onClick={() => onDatePreset("clear")}>Clear dates</button>
+      </div>
+      <div className="mre-filters">
       <input
         onChange={(event) => onChange("query", event.target.value)}
         placeholder="Search comment, product, reviewer, id"
@@ -40,6 +48,15 @@ export function Filters({ filters, onChange, productOptions }) {
         />
         Images only
       </label>
+      <label className="mre-check">
+        <input
+          checked={filters.problemOnly}
+          onChange={(event) => onChange("problemOnly", event.target.checked)}
+          type="checkbox"
+        />
+        Problems
+      </label>
+      </div>
     </div>
   );
 }

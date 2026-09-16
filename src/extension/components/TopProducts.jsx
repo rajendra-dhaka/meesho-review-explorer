@@ -1,6 +1,6 @@
 import { shorten } from "../utils/reviews.js";
 
-export function TopProducts({ products, reviewCount }) {
+export function TopProducts({ onSelectProduct, products, reviewCount }) {
   if (!products.length) return null;
 
   return (
@@ -15,10 +15,13 @@ export function TopProducts({ products, reviewCount }) {
             <summary>
               <span className="mre-rank">{index + 1}</span>
               <img alt="" loading="lazy" src={product.image} />
-              <span className="mre-product-title">{shorten(product.name, 92)}</span>
+              <button className="mre-product-title" onClick={() => onSelectProduct(product.id)}>
+                {shorten(product.name, 92)}
+              </button>
               <span className="mre-product-score">
                 <strong>{product.averageRating.toFixed(2)} ★</strong>
                 <em>{product.total} reviews</em>
+                <em className={product.riskScore > 45 ? "is-risky" : ""}>{product.riskScore}% risk</em>
               </span>
             </summary>
             <div className="mre-rating-breakdown">

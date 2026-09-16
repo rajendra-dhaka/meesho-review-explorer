@@ -3,14 +3,19 @@ import { DEFAULT_MAX_REVIEWS, PAGE_SIZE } from "../constants.js";
 import { fetchReviewPage, fetchShopProfile } from "../services/meeshoApi.js";
 import {
   buildProductOptions,
+  buildDateComparison,
+  buildProblemInsights,
+  buildProducts,
   buildStats,
   buildTopProducts,
   filterReviews,
   findMaskedSupplierId,
   findReviews,
   getNextCursor,
+  getDatePresetRange,
   getReviewDateRange,
   groupReviewsByDate,
+  toCsv,
 } from "../utils/reviews.js";
 import { getShopHandleFromUrl } from "../utils/shop.js";
 import { clearLegacyStorage, getStoredShopData, saveStoredShopData } from "../utils/storage.js";
@@ -23,8 +28,10 @@ const DEFAULT_FILTERS = {
   to: "",
   sort: "newest",
   mediaOnly: false,
+  problemOnly: false,
 };
 
+const REVIEW_PAGE_SIZE = 60;
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function useReviewExplorer() {
@@ -33,6 +40,9 @@ export function useReviewExplorer() {
   const [supplierId, setSupplierId] = useState("");
   const [reviews, setReviews] = useState([]);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [lightboxImage, setLightboxImage] = useState("");
+  const [reviewPage, setReviewPage] = useState(1);
   const [status, setStatus] = useState("");
   const [isProfileLoading, setIsProfileLoading] = useState(Boolean(getShopHandleFromUrl()));
   const [isProfileReady, setIsProfileReady] = useState(false);
@@ -44,7 +54,15 @@ export function useReviewExplorer() {
   const productOptions = useMemo(() => buildProductOptions(reviews), [reviews]);
   const stats = useMemo(() => buildStats(reviews, filteredReviews), [filteredReviews, reviews]);
   const groupedReviews = useMemo(() => groupReviewsByDate(filteredReviews), [filteredReviews]);
+  const pagedReviews = useMemo(() => {
+    const start = (reviewPage - 1) * REVIEW_PAGE_SIZE;
+    return filteredReviews.slice(start, start + REVIEW_PAGE_SIZE);
+  }, [filteredReviews, reviewPage]);
+  const groupedPagedReviews = useMemo(() => groupReviewsByDate(pagedReviews), [pagedReviews]);
   const topProducts = useMemo(() => buildTopProducts(filteredReviews), [filteredReviews]);
+  const allProducts = useMemo(() => buildProducts(filteredReviews), [filteredReviews]);
+  const problemInsights = useMemo(() => buildProblemInsights(filteredReviews), [filteredReviews]);
+  const dateComparison = useMemo(() => buildDateComparison(filteredReviews), [filteredReviews]);
   const loadedDateRange = useMemo(() => getReviewDateRange(reviews), [reviews]);
   const resultDateRange = useMemo(() => getReviewDateRange(filteredReviews), [filteredReviews]);
 
@@ -60,6 +78,30 @@ export function useReviewExplorer() {
 
   const updateFilter = useCallback((key, value) => {
     setFilters((current) => ({ ...current, [key]: value }));
+    setReviewPage(1);
+  }, []);
+
+  const applyDatePreset = useCallback((preset) => {
+    const range = getDatePresetRange(preset);
+    setFilters((current) => ({ ...current, from: range.from, to: range.to }));
+    setReviewPage(1);
+  }, []);
+
+  const selectProduct = useCallback((productId) => {
+    setFilters((current) => ({ ...current, product: productId }));
+    setActiveTab("reviews");
+    setReviewPage(1);
+  }, []);
+
+  const showProblems = useCallback(() => {
+    setFilters((current) => ({
+      ...current,
+      problemOnly: true,
+      rating: "all",
+      sort: "rating-low",
+    }));
+    setActiveTab("problems");
+    setReviewPage(1);
   }, []);
 
   const resetForShop = useCallback((handle) => {
@@ -212,6 +254,18 @@ export function useReviewExplorer() {
     URL.revokeObjectURL(url);
   }, [filteredReviews]);
 
+  const downloadFilteredCsv = useCallback(() => {
+    const blob = new Blob([toCsv(filteredReviews)], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "meesho-filtered-reviews.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [filteredReviews]);
+
   useEffect(() => {
     const handle = getShopHandleFromUrl();
     setShopHandle(handle);
@@ -250,24 +304,55 @@ export function useReviewExplorer() {
     }
   }, [filters.product, productOptions]);
 
+  const reviewPagination = useMemo(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredReviews.length / REVIEW_PAGE_SIZE));
+    return {
+      page: Math.min(reviewPage, totalPages),
+      pageSize: REVIEW_PAGE_SIZE,
+      total: filteredReviews.length,
+      totalPages,
+      from: filteredReviews.length ? (Math.min(reviewPage, totalPages) - 1) * REVIEW_PAGE_SIZE + 1 : 0,
+      to: Math.min(Math.min(reviewPage, totalPages) * REVIEW_PAGE_SIZE, filteredReviews.length),
+    };
+  }, [filteredReviews.length, reviewPage]);
+
+  useEffect(() => {
+    if (reviewPage > reviewPagination.totalPages) {
+      setReviewPage(reviewPagination.totalPages);
+    }
+  }, [reviewPage, reviewPagination.totalPages]);
+
   return {
     actions: {
       close: () => setIsOpen(false),
       copyFilteredReviews,
       detectProfile,
+      applyDatePreset,
       downloadFilteredReviews,
+      downloadFilteredCsv,
       loadReviews,
       open: () => {
         setIsOpen(true);
         if (!isProfileReady) detectProfile();
       },
       setSupplierId,
+      setActiveTab,
+      setLightboxImage,
+      setReviewPage,
+      selectProduct,
+      showProblems,
       updateFilter,
     },
     data: {
+      activeTab,
+      allProducts,
+      dateComparison,
       filteredReviews,
       groupedReviews,
+      groupedPagedReviews,
+      lightboxImage,
       loadedDateRange,
+      problemInsights,
       productOptions,
       resultDateRange,
       reviews,
@@ -275,6 +360,7 @@ export function useReviewExplorer() {
       stats,
       supplierId,
       topProducts,
+      reviewPagination,
     },
     filters,
     status,

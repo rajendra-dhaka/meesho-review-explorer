@@ -5,8 +5,10 @@ export function Controls({
   disabled,
   isReviewLoading,
   onCopy,
+  onCsv,
   onDetect,
   onDownload,
+  onProblems,
   onLoad,
   onSupplierChange,
   supplierId,
@@ -49,8 +51,14 @@ export function Controls({
       <button className="mre-secondary" disabled={disabled} onClick={onCopy}>
         Copy JSON
       </button>
+      <button className="mre-secondary" disabled={disabled} onClick={onCsv}>
+        CSV
+      </button>
       <button className="mre-secondary" disabled={disabled} onClick={onDownload}>
         Download
+      </button>
+      <button className="mre-secondary mre-danger-soft" disabled={disabled} onClick={onProblems}>
+        Problems
       </button>
     </div>
   );
