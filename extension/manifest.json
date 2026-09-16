@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Meesho Review Explorer",
+  "version": "1.1.0",
+  "description": "Load Meesho seller reviews into a searchable, filterable modal.",
+  "permissions": ["storage", "clipboardWrite"],
+  "host_permissions": ["https://www.meesho.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.meesho.com/*"],
+      "js": ["page-hook.js", "content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["injected.js"],
+      "matches": ["https://www.meesho.com/*"]
+    }
+  ]
+}
